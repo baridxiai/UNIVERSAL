@@ -12,7 +12,8 @@ import unicodedata
 from sacrebleu import BLEU
 
 bleu = BLEU()
-bleu.effective_order = True
+# bleu.effective_order = True
+# tf.print(bleu.get_signature())
 
 
 def _get_ngrams_with_counter(segment, max_order):
@@ -111,23 +112,25 @@ def _get_ngrams_with_counter(segment, max_order):
 #     return np.float32(bleu * 100 / num), tf.constant(1.0)
 
 
-def compute_bleu(raw_reference_corpus, raw_translation_corpus, eos_id=1, max_order=4, use_bp=True):
+def compute_bleu(raw_reference_corpus, raw_translation_corpus, eos_id=2, max_order=4, use_bp=True):
     try:
         reference_corpus = raw_reference_corpus.numpy().tolist()
         translation_corpus = raw_translation_corpus.numpy().tolist()
     except Exception:
-        # eos_id = eos_id
-        # eos_id = 1
+        #     # eos_id = eos_id
+        #     # eos_id = 1
         reference_corpus = raw_reference_corpus
         translation_corpus = raw_translation_corpus
     reference_corpus = [
-        " ".join([str(r) for r in misc_util.token_trim(reference, eos_id, remider=1)]) for reference in reference_corpus
+        " ".join([str(r) for r in misc_util.token_trim(reference, eos_id)]) for reference in reference_corpus
     ]
     translation_corpus = [
-        " ".join([str(r) for r in misc_util.token_trim(translation, eos_id, remider=1)])
-        for translation in translation_corpus
+        " ".join([str(r) for r in misc_util.token_trim(translation, eos_id)]) for translation in translation_corpus
     ]
-    return round(bleu.corpus_score(translation_corpus, [reference_corpus]).score, 2), tf.constant(1.0)
+    try:
+        return round(bleu.corpus_score(translation_corpus, [reference_corpus]).score, 2), tf.constant(1.0)
+    except Exception:
+        return 0.0, tf.constant(1.0)
 
 
 def approx_bleu(labels, logits, trim_id=0):

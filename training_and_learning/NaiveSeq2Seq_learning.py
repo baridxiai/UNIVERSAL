@@ -18,12 +18,6 @@ class NaiveSeq2Seq(tf.keras.Model):
             #sparse
         """
         super(NaiveSeq2Seq, self).__init__(name=param["name"])
-        # try:
-        #     self.gradient_tower = kwargs["gradient_tower"]
-        # except Exception:
-        #     self.gradient_tower = None
-        # self.encoder = lambda x: x
-        # self.decoder = lambda x: x
         self.beam_search = BeamSearchBlock.BeamSearch()
         self.param = param
         # def build(self, input_shape):
@@ -45,16 +39,14 @@ class NaiveSeq2Seq(tf.keras.Model):
         self.summary(print_fn=tf.print)
         self.optimizer = optimizer
         self._jit_compile = True
-        # self._steps_per_execution = tf.constant(steps_per_execution)
-        # tf.print([tf.unstack(tf.shape(v)) for v in self.trainable_variables], output_stream=sys.stderr)
 
-    def seq2seq_vae_training(self, call_fn, x, y, eos=None, training=True, annealer=80000, **kwargs):
+    def seq2seq_vae_training(self, call_fn, x, y, sos=None, training=True, annealer=80000, **kwargs):
         with tf.GradientTape() as model_tape:
-            if eos is not None:
-                eos_y = tf.pad(y, [[0, 0], [1, 0]], constant_values=eos)[:, :-1]
+            if sos is not None:
+                sos_y = tf.pad(y, [[0, 0], [1, 0]], constant_values=sos)[:, :-1]
             else:
-                eos_y = y
-            x_logits, vae_loss = call_fn((x, eos_y), training=training, **kwargs)
+                sos_y = y
+            x_logits, vae_loss = call_fn((x, sos_y), training=training, **kwargs)
             loss = self.seq2seq_loss_FN([y, x_logits], auto_loss=False, pre_sum=False) + (vae_loss) * (
                 tf.minimum(1.0, tf.cast(self.optimizer.iterations, tf.float32) / tf.cast(annealer, tf.float32))
             )
@@ -102,9 +94,7 @@ class NaiveSeq2Seq(tf.keras.Model):
         else:
             grad_norm = tf.linalg.global_norm(model_gradients)
         self.optimizer.apply_gradients(zip(model_gradients, self.trainable_variables))
-        # If n_acum_step reach the n_gradients then we apply accumulated gradients to update the variables otherwise do nothing
         self.grad_norm_ratio(grad_norm)
-        # self.total_loss(loss)
         self.perplexity(tf.math.exp(tf.cast(loss, tf.float32)))
         if "tgt_label" in kwargs:
             y = kwargs["tgt_label"]
@@ -113,24 +103,11 @@ class NaiveSeq2Seq(tf.keras.Model):
         self.tokenPerS(tf.cast(tf.math.multiply(batch_size, (tf.shape(x)[1] + tf.shape(y)[1])), tf.float32))
         return
 
-    # def predict_step(self,  x_logits, y, sos=None, **kwargs):
-    #     """
-    #         Reload the default model.predict_step for on-the-fly eval
-    #     """
-    #     loss = self.seq2seq_loss_FN([y, x_logits], auto_loss=False)
-    #     self.perplexity(tf.math.exp(tf.cast(loss, tf.float32)))
-    #     if "tgt_label" in kwargs:
-    #         y = kwargs["tgt_label"]
-    #     self.seq2seq_metric([y, x_logits])
-    #     # batch_size = tf.shape(x)[0]
-    #     # self.tokenPerS(tf.cast(tf.math.multiply(batch_size, (tf.shape(x)[1] + tf.shape(y)[1])), tf.float32))
-    #     return loss
     def predict(self, autoregressive_fn, sos_id=1, eos_id=2, cache=None, beam_size=0, max_decode_length=99):
         """Return predicted sequence."""
         decoded_ids, scores = self.beam_search.predict(
             autoregressive_fn,
             self.param["vocabulary_size"],
-            # sos_id=self.param["SOS_ID"],
             eos_id=self.param["EOS_ID"],
             cache=cache,
             max_decode_length=max_decode_length,

@@ -5,16 +5,20 @@ import tensorflow as tf
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.pre_tokenizers import Whitespace
+from tokenizers import pre_tokenizers, decoders, trainers, processors
 # import fasttext
 # lang_checker = fasttext.load_model('../lid.176.ftz')
 
 
 class DatasetManager(object):
     def __init__(self, tokenizer_path, training_set, dev_set=None, test_set=None, domain_index=[]):
-        self.tokenizer = Tokenizer(BPE(continuing_subword_prefix="@@"))
-        self.tokenizer.pre_tokenizer = Whitespace()
-        self.tokenizer.model = BPE.from_file(
-            tokenizer_path + 'vocab.json', tokenizer_path + 'merges.txt', unk_token="[UNK]",)
+        # self.tokenizer = Tokenizer(BPE(continuing_subword_prefix="@@"))
+        # self.tokenizer.decoder = decoders.ByteLevel()
+        # self.tokenizer.post_processor = processors.ByteLevel(trim_offsets=True)
+        # self.tokenizer.pre_tokenizer = Whitespace()
+        # self.tokenizer.model = BPE.from_file(
+        #     tokenizer_path + 'vocab.json', tokenizer_path + 'merges.txt', unk_token="[UNK]")
+        self.tokenizer =  Tokenizer.from_file(tokenizer_path + 'tokenizer.json')
         self.domain_index = domain_index
         self.train_examples = training_set
         self.test_examples = test_set

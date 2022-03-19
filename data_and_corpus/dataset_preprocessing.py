@@ -54,9 +54,7 @@ def prepare_training_input(
         bucket_batch_sizes = tf.constant(bucket_batch_sizes, dtype=tf.int64)
         return buckets_max, bucket_batch_sizes
 
-    buckets_max, bucket_batch_sizes = _create_max_boundaries_and_batch_size(
-        batch_size, max_sequence_length
-    )
+    buckets_max, bucket_batch_sizes = _create_max_boundaries_and_batch_size(batch_size, max_sequence_length)
     dataset = dataset.filter(_filter_min)
     dataset = dataset.filter(_filter_max)
     if tf_encode is None:

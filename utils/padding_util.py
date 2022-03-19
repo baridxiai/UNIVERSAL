@@ -34,7 +34,6 @@ def seq_padding_remover(x, pad_mask):
     Returns:
       a tensor of shape [dim_compressed,...] with dim_compressed <= dim_origin
     """
-    pad_mask = tf.squeeze(pad_mask, [1, 2])
     with tf.name_scope("pad_reduce/remove"):
         # x_shape = x.get_shape().as_list()
         x = tf.gather_nd(
@@ -56,7 +55,6 @@ def seq_padding_restore(x, pad_mask):
       a tensor of shape [dim_origin,...] with dim_compressed >= dim_origin. The
       dim is restored from the original reference tensor
     """
-    pad_mask = tf.squeeze(pad_mask, [1, 2])
     # pad_mask = tf.expand_dims(pad_mask,-1)
     with tf.name_scope("pad_reduce/restore"):
         x = tf.scatter_nd(
@@ -77,13 +75,13 @@ def get_padding_bias(x):
   Args:
     x: int tensor with shape [batch_size, length]
   Returns:
-    Attention bias tensor of shape [batch_size, 1, 1, length].
+    Attention bias tensor of shape [batch_size, 1, length].
   """
     with tf.name_scope("attention_bias"):
         padding = get_padding(x)
         attention_bias = padding
-        attention_bias = tf.expand_dims(tf.expand_dims(attention_bias, axis=1),
-                                        axis=1)
+        attention_bias = tf.expand_dims(attention_bias, axis=1)
+
     return attention_bias
 
 

@@ -30,13 +30,8 @@ class Feed_Forward_Network(tf.keras.layers.Layer):
             kernel_initializer=tf.keras.initializers.glorot_uniform,
         )
         self.output_dense_layer = tf.keras.layers.Dense(
-            self.out_dim,
-            use_bias=True,
-            # activation=self.activation_output,
-            name="output_layer",
-            kernel_initializer=tf.keras.initializers.glorot_uniform,
+            self.out_dim, use_bias=True, name="output_layer", kernel_initializer=tf.keras.initializers.glorot_uniform,
         )
-        # self.mask = tf.keras.layers.Masking(0)
         super(Feed_Forward_Network, self).build(input_shape)
 
     def get_config(self):
@@ -54,23 +49,13 @@ class Feed_Forward_Network(tf.keras.layers.Layer):
       Output of the feedforward network.
       tensor with shape [batch_size, length, num_units]
     """
-        # Retrieve dynamically known shapes
-        # batch_size = tf.shape(x)[0]
-        # length = tf.shape(x)[1]
-        # import pdb;pdb.set_trace()
         if padding_position is not None and training:
             x = padding_util.seq_padding_remover(x, padding_position)
-        # x_shape = tf.shape(x)
-        # d = self.out_dim
-        # batch_size = x_shape[0]
-        # x = tf.reshape(x, [-1, d])
         output = self.filter_dense_layer(x)
         if training:
             output = tf.nn.dropout(output, rate=self.dropout)
-        # output = tf.keras.activations.relu(output)
         output = self.output_dense_layer(output)
 
         if padding_position is not None and training:
             output = padding_util.seq_padding_restore(output, padding_position)
-        # output = tf.reshape(utput, [batch_size, -1, d])
         return output

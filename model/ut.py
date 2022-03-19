@@ -11,14 +11,13 @@ import json
 import sys
 
 
-class UniversalTransformer(transformer.Transformer):
+class UTencoder(tf.keras.layers.Layer):
     def __init__(self, param, **kwargs):
         # super(UniversalTransformer, self).__init__(param)
         # del self.encoder, self.decoder
-        super(UniversalTransformer, self).__init__(param)
+        super(UTencoder, self).__init__()
         # super(transformer.Transformer, self).__init__(param)
         self.param = param
-        # setting NaiveSeq2Seq_model.##
         self.ut_encoder = UniversalTransformerBlock.UniversalTransformerEncoderBLOCK(
             num_units=param["num_units"],
             num_heads=param["num_heads"],
@@ -27,27 +26,8 @@ class UniversalTransformer(transformer.Transformer):
             preNorm=param["preNorm"],
             epsilon=param["epsilon"],
         )
-        self.ut_decoder = UniversalTransformerBlock.UniversalTransformerDecoderBLOCK(
-            num_units=param["num_units"],
-            num_heads=param["num_heads"],
-            dropout=param["dropout"],
-            norm_dropout=param["norm_dropout"],
-            preNorm=param["preNorm"],
-            epsilon=param["epsilon"],
-        )
-
-        self.embedding_softmax_layer = embedding_layer.EmbeddingSharedWeights(
-            param["vocabulary_size"],
-            param["num_units"],
-            pad_id=param["PAD_ID"],
-            name="word_embedding",
-            affine=param["affine_we"],
-            scale_we=param["scale_we"],
-        )
-        self.probability_generator = self.embedding_softmax_layer._linear
         ####### for dynamical controlling steps in inferring###
         self.dynamic_enc = param["num_encoder_steps"]
-        self.dynamic_dec = param["num_decoder_steps"]
 
         # reimplement output layer
         # self.probability_generator = tf.keras.layers.Dense(param["vocabulary_size"], use_bias=False)
@@ -56,16 +36,9 @@ class UniversalTransformer(transformer.Transformer):
             self.final_encoding_norm = layerNormalization_layer.LayerNorm(
                 epsilon=param["epsilon"], name="encoder_output_norm"
             )
-            self.final_decoding_norm = layerNormalization_layer.LayerNorm(
-                epsilon=param["epsilon"], name="decoder_output_norm"
-            )
 
-    def get_config(self):
-        c = self.param
-        return c
-
-    def encoding(self, inputs, attention_bias=None, training=False, enc_position=None, vis=False):
-        src = self.embedding_softmax_layer(inputs)
+    def call(self, inputs, attention_bias=None, training=False, encoder_padding=None, enc_position=None, vis=False):
+        src = inputs
         pre = src
         if training:
             src = tf.nn.dropout(src, self.param["dropout"])
@@ -84,6 +57,7 @@ class UniversalTransformer(transformer.Transformer):
                     max_seq=self.param["max_sequence_length"],
                     step_encoding=self.param["step_encoding"],
                     position_encoding=self.param["position_encoding"],
+                    encoder_padding=encoder_padding,
                 )
                 if vis:
                     step += 1
@@ -104,9 +78,35 @@ class UniversalTransformer(transformer.Transformer):
             if self.param["preNorm"]:
                 src = self.final_encoding_norm(src)
             return src
-            # return self.encoding_output(src)
 
-    def decoding(
+
+class UTdecoder(tf.keras.layers.Layer):
+    def __init__(self, param, **kwargs):
+        # super(UniversalTransformer, self).__init__(param)
+        # del self.encoder, self.decoder
+        super(UTdecoder, self).__init__()
+        # super(transformer.Transformer, self).__init__(param)
+        self.param = param
+        self.ut_decoder = UniversalTransformerBlock.UniversalTransformerDecoderBLOCK(
+            num_units=param["num_units"],
+            num_heads=param["num_heads"],
+            dropout=param["dropout"],
+            norm_dropout=param["norm_dropout"],
+            preNorm=param["preNorm"],
+            epsilon=param["epsilon"],
+        )
+        ####### for dynamical controlling steps in inferring###
+        self.dynamic_dec = param["num_decoder_steps"]
+
+        # reimplement output layer
+        # self.probability_generator = tf.keras.layers.Dense(param["vocabulary_size"], use_bias=False)
+
+        if param["preNorm"]:
+            self.final_decoding_norm = layerNormalization_layer.LayerNorm(
+                epsilon=param["epsilon"], name="decoder_output_norm"
+            )
+
+    def call(
         self,
         inputs,
         enc,
@@ -118,7 +118,7 @@ class UniversalTransformer(transformer.Transformer):
         dec_position=None,
         vis=False,
     ):
-        tgt = self.embedding_softmax_layer(inputs)
+        tgt = inputs
         pre = tgt
         if training:
             tgt = tf.nn.dropout(tgt, self.param["dropout"])
@@ -144,7 +144,6 @@ class UniversalTransformer(transformer.Transformer):
                     step_encoding=self.param["step_encoding"],
                     position_encoding=self.param["position_encoding"],
                 )
-
                 if vis:
                     step += 1
                     temp = tf.concat([tf.reduce_mean(cka.feature_space_linear_cka(pre, tgt), 0), temp], -1)
@@ -164,3 +163,71 @@ class UniversalTransformer(transformer.Transformer):
             if self.param["preNorm"]:
                 tgt = self.final_decoding_norm(tgt)
             return tgt
+
+
+class UniversalTransformer(transformer.Transformer):
+    def __init__(self, param, **kwargs):
+        # super(UniversalTransformer, self).__init__(param)
+        # del self.encoder, self.decoder
+        super(UniversalTransformer, self).__init__(param)
+        # super(transformer.Transformer, self).__init__(param)
+        self.param = param
+        # setting NaiveSeq2Seq_model.##
+        self.ut_encoder = UTencoder(param)
+        self.ut_decoder = UTdecoder(param)
+        self.encoder = self.ut_encoder
+        self.decoder = self.ut_decoder
+        self.embedding_softmax_layer = embedding_layer.EmbeddingSharedWeights(
+            param["vocabulary_size"],
+            param["num_units"],
+            pad_id=param["PAD_ID"],
+            name="word_embedding",
+            affine=param["affine_we"],
+            scale_we=param["scale_we"],
+        )
+        self.probability_generator = self.embedding_softmax_layer._linear
+        ####### for dynamical controlling steps in inferring###
+        self.dynamic_enc = param["num_encoder_steps"]
+        self.dynamic_dec = param["num_decoder_steps"]
+
+        self.dynamic_halting = 1.0
+
+    def encoding(self, inputs, attention_bias=0, training=False, encoder_padding=None, enc_position=None, vis=False):
+        src = self.embedding_softmax_layer(inputs)
+        return self.ut_encoder(
+            src,
+            attention_bias=attention_bias,
+            training=training,
+            encoder_padding=encoder_padding,
+            enc_position=enc_position,
+            vis=vis,
+        )
+
+    def decoding(
+        self,
+        inputs,
+        enc,
+        decoder_self_attention_bias,
+        attention_bias,
+        training=False,
+        cache=None,
+        decoder_padding=None,
+        dec_position=None,
+        vis=False,
+    ):
+        tgt = self.embedding_softmax_layer(inputs)
+        return self.ut_decoder(
+            tgt,
+            enc,
+            decoder_self_attention_bias,
+            attention_bias,
+            training=training,
+            cache=cache,
+            decoder_padding=decoder_padding,
+            dec_position=dec_position,
+            vis=vis,
+        )
+
+    def get_config(self):
+        c = self.param
+        return c

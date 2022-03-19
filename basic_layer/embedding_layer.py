@@ -46,8 +46,7 @@ class EmbeddingSharedWeights(tf.keras.layers.Layer):
                 shape=[self.vocab_size],
                 dtype="float32",
                 name="shared_weights_affline",
-                # initializer=tf.random_normal_initializer(mean=0.0, stddev=self.num_units ** -0.5),
-                initializer=tf.keras.initializers.glorot_uniform,
+                initializer=tf.random_normal_initializer(mean=0.0, stddev=self.num_units ** -0.5),
             )
 
         super(EmbeddingSharedWeights, self).build(input_shape)

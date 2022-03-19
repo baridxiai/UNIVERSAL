@@ -5,7 +5,6 @@ from tensorflow.python.training import training_ops
 from tensorflow.python.ops import math_ops
 
 # import runai.ga.keras
-from runai.ga.keras import hooks
 import re
 
 
@@ -34,12 +33,14 @@ class MultistepAdamOptimizer(tf.compat.v1.train.AdamOptimizer):
         warmmup_steps=4000,
         d_model=512,
         n=2,
+        init_step = 1
     ):
         super(MultistepAdamOptimizer, self).__init__(
             learning_rate=learning_rate, beta1=beta1, beta2=beta2, epsilon=epsilon, use_locking=use_locking, name=name
         )
         self._n = n  # Call Adam optimizer every n batches with accumulated grads
         self._n_t = None  # n as tensor
+        self.init_step = init_step
         self.lr = tf.cast(learning_rate, tf.float32)
         self.constant_d_model_tensor = tf.cast(d_model, tf.float32)
         self.constant_minus05_tensor = tf.cast(-0.5, tf.float32)
@@ -58,7 +59,7 @@ class MultistepAdamOptimizer(tf.compat.v1.train.AdamOptimizer):
         self._create_non_slot_variable(initial_value=self.beta1, name="beta1_power", colocate_with=first_var)
         self._create_non_slot_variable(initial_value=self.beta2, name="beta2_power", colocate_with=first_var)
         self._create_non_slot_variable(initial_value=0.00001, name="lambda_update", colocate_with=first_var)
-        self._create_non_slot_variable(initial_value=0 if self._n == 1 else 1, name="iter", colocate_with=first_var)
+        self._create_non_slot_variable(initial_value=0 if self._n == 1 else self.init_step, name="iter", colocate_with=first_var)
         # Create slots for the first and second moments, as well as grad_acc.
         for v in var_list:
             self._zeros_slot(v, "m", self._name)

@@ -5,7 +5,7 @@ from tokenizers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.trainers import BpeTrainer
 from tokenizers.pre_tokenizers import Whitespace
-from tokenizers import normalizers
+from tokenizers import pre_tokenizers, decoders, trainers, processors
 from tokenizers.normalizers import NFD, StripAccents, Nmt
 import numpy as np
 import six
@@ -34,18 +34,20 @@ data = [
 #                               eos_id=2,
 #                               unk_id=3,
 #                               pad_id=0)
-tokenizer = Tokenizer(BPE())
-# normalizer = normalizers.Sequence([NFD(), StripAccents(),Nmt()])
+tokenizer = Tokenizer(BPE(continuing_subword_prefix="@@"))
+# normalizer = normalizers.Sequence([NFD(), StripAccents(),Nmt()])tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=True)
+tokenizer.pre_tokenizer = Whitespace()
 trainer = BpeTrainer(
     special_tokens=["[PAD]", "[SOS]", "[EOS]", "[UNK]", "[MASK]"],
     vocab_size=32000,
-    limit_alphabet=200,
+    min_frequency=2,
+    initial_alphabet=pre_tokenizers.ByteLevel.alphabet(),
+    continuing_subword_prefix="@@",
 )
-tokenizer.pre_tokenizer = Whitespace()
 tokenizer.train(files=data, trainer=trainer)
-files = tokenizer.model.save(c_path + "/vocabulary/DeEn_32000_v3/", c_path + "/vocabulary/DeEn_32000_v3/",)
+tokenizer.save(c_path + "/vocabulary/DeEn_32000_v4/tokenizer.json")
+files = tokenizer.model.save(c_path + "/vocabulary/DeEn_32000_v4/", c_path + "/vocabulary/DeEn_32000_v4/",)
 # tokenizer.model = BPE.from_file(*files, unk_token="[UNK]")
-# tokenizer.save(c_path + "/vocabulary/DeEn_32000/tokenizer_config_in_case.json")
 # for d in data:
 #     with open(d +".BPE",'w') as output:
 #         with open(d,'r') as corpus:

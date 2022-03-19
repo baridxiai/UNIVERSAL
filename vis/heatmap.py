@@ -97,12 +97,12 @@ ref = [
         7998, 16135,    66, 23480,  2702,  3295,  4392,  2692,  3688,
         7721,    14, 11059,  3543, 12210,  4977, 19740,  3050,  5803,
         8805,  2614,  6007,    14,  3137,  2751, 10034,  7649,  6725,
-          16,     2,
+          16,     2, 2
         ]
-code  = [2709, 3190, 2588, 20637, 2707, 30714, 16047, 80, 14, 2823, 2677, 14727, 6244, 2672, 14073, 2837, 7837, 3525, 2594, 21031, 14, 3606, 3429, 2594, 7329, 2588, 4843, 2581, 2594, 12306, 16, 2]
-ref = [2784, 11254, 2647, 2693, 23573, 2785, 16047, 80, 8057, 14, 2618, 2679, 28020, 29481, 14, 2772, 2618, 44, 4370, 2682, 2620, 29222, 3042, 2794, 6361, 2773, 2855, 9794, 3670, 2598, 14381, 4130, 2639, 8559, 2831, 16, 2]
+code  = [2709, 3190, 2588, 20637, 2707, 30714, 16047, 80, 14, 2823, 2677, 14727, 6244, 2672, 14073, 2837, 7837, 3525, 2594, 21031, 14, 3606, 3429, 2594, 7329, 2588, 4843, 2581, 2594, 12306, 16, 2,2]
+ref = [2784, 11254, 2647, 2693, 23573, 2785, 16047, 80, 8057, 14, 2618, 2679, 28020, 29481, 14, 2772, 2618, 44, 4370, 2682, 2620, 29222, 3042, 2794, 6361, 2773, 2855, 9794, 3670, 2598, 14381, 4130, 2639, 8559, 2831, 16, 2,2,2]
 # code = ref
-step = 20
+step = 6
 vegetables = []
 df = []
 farmers = []
@@ -134,14 +134,17 @@ def token_vis(path):
     cmap="YlGnBu",
     xticklabels=vegetables,
     yticklabels=farmers,
-    ax=ax,annot=True,square=True, annot_kws={"fontsize":6},cbar=False)
+    ax=ax,annot=True,square=True, annot_kws={"fontsize":4},cbar=False)
     return
 # token_vis("../universalTransformer/enc_cka_similarity.json")
 # sentence_vis("../universalTransformer/dec_cka_similarity_sentence.json")
-# token_vis("/Users/barid/Desktop/lt/ut_6/dec_cka_similarity.json")
-token_vis("../lazy_transformer/enc_halting_pro.json")
-# token_vis("../lazy_transformer/enc_cka_similarity.json")
+#########
+# token_vis("/Users/barid/Desktop/lt/lt_6_SOTA/dec_halting_pro.json")
+##############
+# token_vis("../lazy_transformer/dec_halting_pro.json"
+# token_vis("/Users/barid/Desktop/lt/ut_6/enc_cka_similarity.json")
 # sentence_vis("../lazy_transformer/enc_cka_similarity_sentence.json")
+token_vis("../lazy_transformer/enc_cka_similarity.json")
 
 plt.setp(ax.get_yticklabels(), rotation=45, ha="right",
          rotation_mode="anchor")
@@ -149,5 +152,7 @@ plt.setp(ax.get_xticklabels(), rotation=30, ha="right", rotation_mode="anchor")
 plt.xlabel("position")
 plt.ylabel("step")
 fig.tight_layout()
+plt.rcParams['savefig.dpi'] = 300
+plt.savefig("/Users/barid/Desktop/acl_UT6NO_enc_cka_similarity.png")
 plt.show()
 #######################################################

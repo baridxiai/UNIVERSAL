@@ -8,6 +8,18 @@ SRC_LANG = 1
 TGT_LANG = 2
 
 
+def input_preprocessing(x, non_padding=None):
+    """
+    apply non_paddings to x.
+    non_padding = [1,1,1,1,0,0,0]
+    x  = x * non_paddin
+
+    """
+    if non_padding is not None:
+        x *= non_padding
+    return x
+
+
 # class TransformerEncoderBLOCK(tf.keras.layers.Layer):
 class TransformerEncoderBLOCK(tf.keras.layers.Layer):
     """
@@ -61,12 +73,18 @@ class TransformerEncoderBLOCK(tf.keras.layers.Layer):
         #     self.final_norm = layerNormalization_layer.LayerNorm()
         super(TransformerEncoderBLOCK, self).build(input_shape)
 
-    def call(self, inputs, attention_bias=0, training=False, index=None, scale=None, **kwargs):
+    def call(self, inputs, attention_bias=0, training=False, index=None, encoder_padding=None, scale=None, **kwargs):
+        if encoder_padding is not None:
+            input_padding = 1 - tf.expand_dims(encoder_padding, -1)
+        else:
+            input_padding = None
         with tf.name_scope("Transformer_encoder"):
+            inputs = input_preprocessing(inputs, input_padding)
             inputs = self.self_att(inputs, bias=attention_bias, training=training, scale=scale)
-            inputs = self.ffn(inputs, training=training, padding_position=attention_bias)
+            inputs = input_preprocessing(inputs, input_padding)
+            inputs = self.ffn(inputs, training=training, padding_position=encoder_padding)
+            inputs = input_preprocessing(inputs, input_padding)
             return inputs
-
     def get_config(self):
         c = {
             "num_units": self.num_units,
@@ -131,8 +149,6 @@ class TransformerDecoderBLOCK(tf.keras.layers.Layer):
         self.ffn = layerNormalization_layer.NormBlock(
             ffn, self.norm_dropout, pre_mode=self.preNorm, epsilon=self.epsilon
         )
-        # if self.preNorm:
-        #     self.final_norm = layerNormalization_layer.LayerNorm()
         super(TransformerDecoderBLOCK, self).build(input_shape)
 
     def call(
@@ -148,12 +164,20 @@ class TransformerDecoderBLOCK(tf.keras.layers.Layer):
         scale=None,
         **kwargs
     ):
+        if decoder_padding is not None:
+            input_padding = 1 - tf.expand_dims(decoder_padding, -1)
+        else:
+            input_padding = None
         with tf.name_scope("Transformer_decoder"):
+            inputs = input_preprocessing(inputs, input_padding)
             inputs = self.self_att(
                 inputs, bias=decoder_self_attention_bias, training=training, cache=cache, scale=scale
             )
+            inputs = input_preprocessing(inputs, input_padding)
             inputs = self.att(inputs, y=enc, bias=attention_bias, training=training, scale=scale)
+            inputs = input_preprocessing(inputs, input_padding)
             inputs = self.ffn(inputs, training=training, padding_position=decoder_padding)
+            inputs = input_preprocessing(inputs, input_padding)
             return inputs
 
     def get_config(self):

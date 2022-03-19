@@ -26,8 +26,6 @@ class LayerNorm(tf.keras.layers.Layer):
         super(LayerNorm, self).build(input_shape)
 
     def call(self, inputs):
-        # inputs = self.mask(inputs)
-        # bias = hyper_util.zero_masking(inputs)
         if self.mode == "tanh":
             filter = tf.cast(tf.not_equal(inputs, 0.0), tf.float32)
             mean, variance = tf.nn.moments(inputs, [-1], keepdims=True)
@@ -41,9 +39,7 @@ class LayerNorm(tf.keras.layers.Layer):
         return output
 
     def get_config(self):
-        # config = super(LayerNorm, self).get_config()
         c = {"epsilon": self.epsilon}
-        # config.update(c)
         return c
 
 
@@ -58,14 +54,12 @@ class NormBlock(tf.keras.layers.Layer):
     def __init__(self, layer, dropout, pre_mode=True, epsilon=1e-6):
         super(NormBlock, self).__init__()
         self.layer = layer
-        # self.num_units = num_units
         self.dropout = dropout
         self.pre_mode = pre_mode
         self.epsilon = epsilon
 
     def build(self, input_shape):
-        # Create normalization layer
-        self.layer_norm =LayerNorm(epsilon=self.epsilon)
+        self.layer_norm = LayerNorm(epsilon=self.epsilon)
         super(NormBlock, self).build(input_shape)
 
     def get_config(self):
@@ -73,30 +67,17 @@ class NormBlock(tf.keras.layers.Layer):
 
     def call(self, x, *args, **kwargs):
         """Calls wrapped layer with same parameters."""
-        # Preprocessing: apply layer normalization
         training = kwargs["training"]
-
         if self.pre_mode:
-
             y = self.layer_norm(x)
-
-            # Get layer output
             y = self.layer(y, *args, **kwargs)
-            # if isinstance(y,tuple):
-            #     y = y[0]
-            # Postprocessing: apply dropout and residual connection
             if training:
-                #     y = tf.nn.dropout(y, rate=self.dropout)
                 y = tf.nn.dropout(y, self.dropout,)
 
             y = y + x
 
         else:
-            # Get layer output
             y = self.layer(x, *args, **kwargs)
-            # if isinstance(y,tuple):
-            #     y = y[0]
-            # Postprocessing: apply dropout and residual connection
             if training:
                 y = tf.nn.dropout(y, rate=self.dropout)
             y = self.layer_norm(y + x)

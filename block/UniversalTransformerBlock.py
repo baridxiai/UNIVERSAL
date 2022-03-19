@@ -9,6 +9,18 @@ import math
 # import numpy as np
 
 
+def input_preprocessing(x, non_padding=None):
+    """
+    apply non_paddings to x.
+    non_padding = [1,1,1,1,0,0,0]
+    x  = x * non_paddin
+
+    """
+    if non_padding is not None:
+        x *= non_padding
+    return x
+
+
 def ut_input_preprocess(
     inputs, step, training=False, position_index=None, step_encoding=True, position_encoding=True, **kwargs
 ):
@@ -39,6 +51,7 @@ class UniversalTransformerEncoderBLOCK(TransformerBlock.TransformerEncoderBLOCK)
         self,
         inputs,
         attention_bias,
+        encoder_padding=None,
         enc_position=None,
         training=False,
         step=None,
@@ -49,6 +62,11 @@ class UniversalTransformerEncoderBLOCK(TransformerBlock.TransformerEncoderBLOCK)
         with tf.name_scope("UT_encoder"):
             if step_encoding:
                 assert step is not None, "step is required when setting step_encoding = True"
+            if encoder_padding is not None:
+                input_padding = 1 - tf.expand_dims(encoder_padding, -1)
+            else:
+                input_padding = None
+            inputs = input_preprocessing(inputs, input_padding)
             inputs = ut_input_preprocess(
                 inputs,
                 step,
@@ -57,16 +75,14 @@ class UniversalTransformerEncoderBLOCK(TransformerBlock.TransformerEncoderBLOCK)
                 step_encoding=step_encoding,
                 **kwargs
             )
-            # if not self.preNorm:
-            #     inputs = self.input_preNorm(inputs)
-            # if training:
-            #     inputs = tf.nn.dropout(inputs, rate=self.dropout)
             inputs = super(UniversalTransformerEncoderBLOCK, self).call(
                 inputs,
                 attention_bias,
                 training=training,
                 index=step,
-                scale=self.num_units ** -0.5, **kwargs
+                encoder_padding=encoder_padding,
+                scale=self.num_units ** -0.5,
+                **kwargs
             )
             return inputs
 
@@ -91,6 +107,11 @@ class UniversalTransformerDecoderBLOCK(TransformerBlock.TransformerDecoderBLOCK)
         with tf.name_scope("UT_decoder"):
             if step_encoding:
                 assert step is not None, "step is required when setting step_encoding = True"
+            if decoder_padding is not None:
+                input_padding = 1 - tf.expand_dims(decoder_padding, -1)
+            else:
+                input_padding = None
+            inputs = input_preprocessing(inputs, input_padding)
             inputs = ut_input_preprocess(
                 inputs,
                 step,

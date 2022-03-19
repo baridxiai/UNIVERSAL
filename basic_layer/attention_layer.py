@@ -221,6 +221,7 @@ class Attention(tf.keras.layers.Layer):
         q = split_heads(q, self.num_heads)
         k = split_heads(k, self.num_heads)
         v = split_heads(v, self.num_heads)
+        bias = tf.expand_dims(bias, 1)  # [X, X,X] --> [X,1,X,X] expand dims for head
         if cache is not None:
             # Combine cached keys and values with new keys and values.
             k = tf.concat((cache["k"], k), axis=2)
