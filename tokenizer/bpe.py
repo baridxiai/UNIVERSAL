@@ -15,8 +15,8 @@ import os
 
 c_path = os.getcwd()  # "no last slash"
 data = [
-    "/home/vivalavida/massive_data/data/fair/wmt14_en_de_v3/train.de",
-    "/home/vivalavida/massive_data/data/fair/wmt14_en_de_v3/train.en",
+    # "/home/vivalavida/massive_data/data/fair/wmt14_en_de_v3/train.de",
+    # "/home/vivalavida/massive_data/data/fair/wmt14_en_de_v3/train.en",
     # "/home/vivalavida/massive_data/data/europarl-v7/europarl-v7.de-en.en",
     # "/home/vivalavida/massive_data/data/training-parallel-commoncrawl/commoncrawl.de-en.en",
     # "/home/vivalavida/massive_data/data/News_Commentary/news-commentary-v9.de-en.en",
@@ -25,6 +25,29 @@ data = [
     # "/home/vivalavida/massive_data/data/News_Commentary/news-commentary-v9.de-en.de",
     # "/home/vivalavida/massive_data/data/parallel_corpora/europarl-v7+commoncrawl+news.de-en.de",
     # "/home/vivalavida/massive_data/data/parallel_corpora/europarl-v7+commoncrawl+news.de-en.en",
+    # "/home/vivalavida/massive_data/data/Tokenized.news.2009.de.shuffled_filter",
+    # "/home/vivalavida/massive_data/data/Tokenized.news.2011.de.shuffled_filter",
+    # "/home/vivalavida/massive_data/data/Tokenized.news.2014.de.shuffled_filter",
+    # "/home/vivalavida/massive_data/data/Tokenized.news.2009.en.shuffled_filter",
+    # "/home/vivalavida/massive_data/data/Tokenized.news.2011.en.shuffled_filter",
+    # "/home/vivalavida/massive_data/data/Tokenized.news.2014.en.shuffled_filter",
+    "/home/vivalavida/massive_data/data/wiki/de_wiki.TOK",
+    "/home/vivalavida/massive_data/data/wiki/en_wiki.TOK",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_de",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_en",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_ar",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_bg",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_el",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_es",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_fr",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_hi",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_ru",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_sw",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_ur",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_vi",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_zh",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_tr",
+    # "/home/vivalavida/massive_data/data/wiki/bpe_th",
 ]
 # sp.SentencePieceTrainer.train(input=data,
 #                               model_prefix='bilingual_deen60000',
@@ -39,14 +62,17 @@ tokenizer = Tokenizer(BPE(continuing_subword_prefix="@@"))
 tokenizer.pre_tokenizer = Whitespace()
 trainer = BpeTrainer(
     special_tokens=["[PAD]", "[SOS]", "[EOS]", "[UNK]", "[MASK]"],
-    vocab_size=32000,
-    min_frequency=2,
-    initial_alphabet=pre_tokenizers.ByteLevel.alphabet(),
+    vocab_size=95000,
+    # min_frequency=1786,
+    # initial_alphabet=pre_tokenizers.ByteLevel.alphabet(),
     continuing_subword_prefix="@@",
 )
+tokenizer.encode()
 tokenizer.train(files=data, trainer=trainer)
-tokenizer.save(c_path + "/vocabulary/DeEn_32000_v4/tokenizer.json")
-files = tokenizer.model.save(c_path + "/vocabulary/DeEn_32000_v4/", c_path + "/vocabulary/DeEn_32000_v4/",)
+tokenizer.save(c_path + "/vocabulary/DeEn_6k_wiki_balanced/tokenizer.json")
+files = tokenizer.model.save(
+    c_path + "/vocabulary/DeEn_6k_wiki_balanced/", c_path + "/vocabulary/DeEn_6k_wiki_balanced/",
+)
 # tokenizer.model = BPE.from_file(*files, unk_token="[UNK]")
 # for d in data:
 #     with open(d +".BPE",'w') as output:

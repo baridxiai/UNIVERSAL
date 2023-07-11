@@ -6,26 +6,44 @@ from UNIVERSAL.basic_optimizer import learning_rate_op
 
 cwd = os.getcwd()
 
+class iTensorBoard(tf.keras.callbacks.TensorBoard):
+    def on_train_batch_end(self, batch, logs=None):
+        with self._train_writer.as_default():
+            step =self.model.optimizer.iterations.read_value()
+            lr_schedule = getattr(self.model.optimizer, "lr", None)
+            if isinstance(lr_schedule, tf.keras.optimizers.schedules.LearningRateSchedule):
+                lr = lr_schedule(step)
+            elif lr_schedule is not None:
+                lr = lr_schedule
+            if step % self.update_freq == 0:
+                for m in self.model.metrics:
+                    tf.summary.scalar(m.name, m.result(),step=step)
+                for v,k in logs.items():
+                    tf.summary.scalar(v, k,step=step)
+            tf.summary.scalar("lr", lr,step=step)
+        return super(iTensorBoard, self).on_train_batch_end(batch, logs=logs)
 
-def get_callbacks(model_path, LRschedule=None, save_freq=5000):
-    TFboard = tf.keras.callbacks.TensorBoard(
-        log_dir=cwd + "/model_summary/", write_images=True, histogram_freq=1000, embeddings_freq=1000, update_freq=500
+def get_callbacks(model_path, LRschedule=None, save_freq=5000, save_best=0,):
+    TFboard = iTensorBoard(
+        log_dir=cwd + "/model_summary/",  update_freq=200
     )
     TFchechpoint = tf.keras.callbacks.ModelCheckpoint(
         model_path + "/model_checkpoint" + "/model.{epoch:02d}-{loss:.2f}.ckpt",
-        monitor="loss",
+        monitor="loss" ,
         save_weights_only=True,
         save_freq=save_freq,
         verbose=1,
+        save_best_only=save_best,
     )
-    TFLRvis = learning_rate_op.LearningRateVisualization()
     NaNchecker = tf.keras.callbacks.TerminateOnNaN()
+    backup = tf.keras.callbacks.BackupAndRestore(backup_dir=model_path + "/model_backup")
+    LRTensorBoard = learning_rate_op.LRTensorBoard()
     call_backs = [
-        # LRschedule,
+        backup,
         TFboard,
         TFchechpoint,
         NaNchecker,
-        # TFLRvis
+        # LRTensorBoard
     ]
     if LRschedule is not None:
         call_backs.append(LRschedule)

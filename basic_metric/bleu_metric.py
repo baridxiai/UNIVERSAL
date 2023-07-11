@@ -128,9 +128,9 @@ def compute_bleu(raw_reference_corpus, raw_translation_corpus, eos_id=2, max_ord
         " ".join([str(r) for r in misc_util.token_trim(translation, eos_id)]) for translation in translation_corpus
     ]
     try:
-        return round(bleu.corpus_score(translation_corpus, [reference_corpus]).score, 2), tf.constant(1.0)
+        return round(bleu.corpus_score(translation_corpus, [reference_corpus]).score, 2)
     except Exception:
-        return 0.0, tf.constant(1.0)
+        return 0.0
 
 
 def approx_bleu(labels, logits, trim_id=0):

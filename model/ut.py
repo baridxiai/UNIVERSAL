@@ -193,9 +193,9 @@ class UniversalTransformer(transformer.Transformer):
         self.dynamic_halting = 1.0
 
     def encoding(self, inputs, attention_bias=0, training=False, encoder_padding=None, enc_position=None, vis=False):
-        src = self.embedding_softmax_layer(inputs)
+        # src = self.embedding_softmax_layer(inputs)
         return self.ut_encoder(
-            src,
+            inputs,
             attention_bias=attention_bias,
             training=training,
             encoder_padding=encoder_padding,
@@ -215,9 +215,9 @@ class UniversalTransformer(transformer.Transformer):
         dec_position=None,
         vis=False,
     ):
-        tgt = self.embedding_softmax_layer(inputs)
+        # tgt = self.embedding_softmax_layer(inputs)
         return self.ut_decoder(
-            tgt,
+            inputs,
             enc,
             decoder_self_attention_bias,
             attention_bias,

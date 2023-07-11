@@ -49,13 +49,13 @@ class Feed_Forward_Network(tf.keras.layers.Layer):
       Output of the feedforward network.
       tensor with shape [batch_size, length, num_units]
     """
-        if padding_position is not None and training:
+        if padding_position is not None:
             x = padding_util.seq_padding_remover(x, padding_position)
         output = self.filter_dense_layer(x)
         if training:
             output = tf.nn.dropout(output, rate=self.dropout)
         output = self.output_dense_layer(output)
 
-        if padding_position is not None and training:
+        if padding_position is not None:
             output = padding_util.seq_padding_restore(output, padding_position)
         return output

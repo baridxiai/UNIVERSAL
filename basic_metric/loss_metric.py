@@ -70,7 +70,7 @@ def spare_crossentropy(true, pred, mask_id=0, vocab_size=25000):
     return tf.reduce_sum(loss_) / tf.reduce_sum(mask)
 
 
-def onehot_loss_function(true, pred, mask_id=0, smoothing=0.1, vocab_size=25000, pre_sum=False):
+def onehot_loss_function(true, pred, mask_id=0, smoothing=0.1, vocab_size=25000, pre_sum=False, label_weights=1,detail_x=False):
     """Short summary.
     Args:
         pred (type): Description of parameter `pred`.
@@ -80,7 +80,8 @@ def onehot_loss_function(true, pred, mask_id=0, smoothing=0.1, vocab_size=25000,
         type: Description of returned object.
 
     """
-    if len(true.get_shape().as_list()) > 1:
+    if len(pred.get_shape().as_list()) - len(pred.get_shape().as_list()) ==1 :
+        ###### sequence model ########
         logits, labels = padding_util.pad_tensors_to_same_length(pred, true)
     else:
         logits, labels = pred, true
@@ -99,14 +100,17 @@ def onehot_loss_function(true, pred, mask_id=0, smoothing=0.1, vocab_size=25000,
         )
         xentropy -= tf.cast(normalizing_constant, xentropy.dtype)
         # xentropy = tf.keras.losses.categorical_crossentropy(soft_targets,logits, from_logits=True)
-        weights = tf.cast(tf.not_equal(labels, 0), xentropy.dtype)
+        weights = tf.cast(tf.not_equal(labels, mask_id), xentropy.dtype)
     # weights = tf.cast(tf.not_equal(labels, 0), tf.float32)
-    xentropy *= weights
+    xentropy *= (weights * label_weights)
     if pre_sum:
         loss = tf.reduce_sum(input_tensor=xentropy) / tf.reduce_sum(input_tensor=weights)
     else:
         loss = tf.reduce_sum(input_tensor=xentropy, axis=-1) / tf.reduce_sum(input_tensor=weights, axis=-1)
-    return loss
+    if detail_x:
+        return loss,tf.reduce_sum(input_tensor=xentropy, axis=-1) / tf.reduce_sum(input_tensor=weights, axis=-1)
+    else:
+        return loss
 
 
 def sampled_loss_function(

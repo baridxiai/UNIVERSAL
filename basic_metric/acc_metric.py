@@ -4,11 +4,11 @@ import tensorflow as tf
 from UNIVERSAL.utils import padding_util
 
 
-def padded_accuracy(labels, logits):
+def padded_accuracy(labels, logits, mask_id=0):
     """Percentage of times that predictions matches labels on non-0s."""
     with tf.name_scope("padded_accuracy"):
         logits, labels = padding_util.pad_tensors_to_same_length(logits, labels)
-        weights = tf.cast(tf.not_equal(labels, 0), tf.float32)
+        weights = tf.cast(tf.not_equal(labels, mask_id), tf.float32)
         if len(logits.get_shape().as_list()) == 3:
             outputs = tf.cast(tf.argmax(logits, axis=-1), tf.int32)
         else:
@@ -71,21 +71,22 @@ class Word_Accuracy_Metric(tf.keras.layers.Layer):
         y_true = tf.cast(y_true, tf.int32)
         y_pred = tf.cast(y_pred, tf.int32)
         value = padded_accuracy(y_true, y_pred)
-        m = self.mean(value)
+        m = self.mean(*value)
         self.add_metric(m)
         return y_pred
 
 
 class Word_Accuracy_Layer(tf.keras.layers.Layer):
-    def __init__(self, n):
+    def __init__(self, n,mask_id=0):
         super(Word_Accuracy_Layer, self).__init__()
         self.n = n
         self.trainable = False
         self.mean = tf.keras.metrics.Mean(self.n)
+        self.mask_id = mask_id
 
     def call(self, inputs):
         targets, logits = inputs[0], inputs[1]
-        m = padded_accuracy(targets, logits)
+        m = padded_accuracy(targets, logits, mask_id=self.mask_id)
         m = self.mean(m)
         self.add_metric(m)
         return logits

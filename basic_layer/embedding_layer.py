@@ -8,7 +8,15 @@ class EmbeddingSharedWeights(tf.keras.layers.Layer):
     """Calculates input embeddings and pre-softmax linear with shared weights."""
 
     def __init__(
-        self, vocab_size, num_units, pad_id=0, scale_we=True, affine=False, name="embedding", domain_index=[],
+        self,
+        vocab_size,
+        num_units,
+        pad_id=0,
+        scale_we=True,
+        affine=False,
+        name="embedding",
+        domain_index=[],
+        initializer = None
     ):
         """Specify characteristic parameters of embedding layer.
     Args:
@@ -30,12 +38,14 @@ class EmbeddingSharedWeights(tf.keras.layers.Layer):
         self.pad_id = pad_id
         self.affine = affine
         self.scale_we = scale_we
+        if initializer is None:
+            initializer = tf.random_normal_initializer(mean=0.0, stddev=self.num_units ** -0.5)
         self.shared_weights = self.add_weight(
             shape=[self.vocab_size, self.num_units],
             dtype="float32",
             name="shared_weights",
-            # initializer=tf.random_normal_initializer(mean=0.0, stddev=self.num_units ** -0.5),
-            initializer=tf.keras.initializers.glorot_uniform,
+            initializer=initializer,
+            # initializer=tf.keras.initializers.glorot_uniform,
         )
         self.domain_index = domain_index
 
@@ -57,8 +67,11 @@ class EmbeddingSharedWeights(tf.keras.layers.Layer):
             return self._linear(inputs, domain_id=domain_id, keep_dim=keep_dim)
         return self._embedding(inputs)
 
-    def _embedding(self, inputs, domain_id=None):
-        embeddings = tf.gather(self.shared_weights, inputs)
+    def _embedding(self, inputs, domain_id=None, normFn=None):
+        if normFn is not None:
+            embeddings = tf.gather(normFn(self.shared_weights), inputs)
+        else:
+            embeddings = tf.gather(self.shared_weights, inputs)
         mask = tf.cast(tf.not_equal(inputs, 0), embeddings.dtype)
         embeddings *= tf.expand_dims(mask, -1)
         # # Scale embedding by the sqrt of the hidden size
@@ -66,7 +79,7 @@ class EmbeddingSharedWeights(tf.keras.layers.Layer):
             embeddings *= self.num_units ** 0.5
         return embeddings
 
-    def _linear(self, inputs, domain_id=None, keep_dim=True):
+    def _linear(self, inputs):
         """Computes logits by running x through a linear layer.
     Args:
       x: A float32 tensor with shape [batch_size, length, num_units]
@@ -76,7 +89,9 @@ class EmbeddingSharedWeights(tf.keras.layers.Layer):
         batch_size = tf.shape(input=inputs)[0]
         length = tf.shape(input=inputs)[1]
         inputs = tf.reshape(inputs, [-1, self.num_units])
-        logits = tf.matmul(tf.cast(inputs, self.shared_weights.dtype), self.shared_weights, transpose_b=True)
+        logits = tf.matmul(
+            tf.cast(inputs, self.shared_weights.dtype), self.shared_weights, transpose_b=True
+        )
 
         return tf.reshape(logits, [batch_size, length, self.vocab_size])
 
@@ -128,3 +143,13 @@ class EmbeddingSharedWeights(tf.keras.layers.Layer):
         }
         # config.update(c)
         return c
+
+
+class PositionEmbedding(EmbeddingSharedWeights):
+    """Calculates input embeddings and pre-softmax linear with shared weights."""
+
+    def call(self, inputs, linear=False, domain_id=None, keep_dim=True):
+        inputs = tf.reshape(tf.range(tf.shape(inputs)[1]), shape=[1, -1])
+        if linear:
+            return self._linear(inputs, domain_id=domain_id, keep_dim=keep_dim)
+        return self._embedding(inputs)

@@ -57,9 +57,13 @@ def attention_image_summary(attn, image_shapes=None):
         else:
             assert len(image_shapes) == 6
             q_rows, q_cols, q_channnels, m_rows, m_cols, m_channels = list(image_shapes)
-            image = tf.reshape(image, [-1, q_rows, q_cols, q_channnels, m_rows, m_cols, m_channels, 3])
+            image = tf.reshape(
+                image, [-1, q_rows, q_cols, q_channnels, m_rows, m_cols, m_channels, 3]
+            )
             image = tf.transpose(image, [0, 1, 4, 3, 2, 5, 6, 7])
-            image = tf.reshape(image, [-1, q_rows * m_rows * q_channnels, q_cols * m_cols * m_channels, 3])
+            image = tf.reshape(
+                image, [-1, q_rows * m_rows * q_channnels, q_cols * m_cols * m_channels, 3]
+            )
     tf.summary.image("attention", image, max_outputs=1)
 
 
@@ -148,7 +152,9 @@ class Attention(tf.keras.layers.Layer):
     """
         if num_units % num_heads:
             raise ValueError(
-                "Hidden size ({}) must be divisible by the number of heads ({}).".format(num_units, num_heads)
+                "Hidden size ({}) must be divisible by the number of heads ({}).".format(
+                    num_units, num_heads
+                )
             )
 
         super(Attention, self).__init__()
@@ -166,13 +172,22 @@ class Attention(tf.keras.layers.Layer):
 
         # attention_initializer = _glorot_initializer(input_shape.as_list()[-1], self.num_units)
         self.q_dense_layer = tf.keras.layers.Dense(
-            self.num_units, name="q", use_bias=False, kernel_initializer=tf.keras.initializers.glorot_uniform
+            self.num_units,
+            name="q",
+            use_bias=False,
+            kernel_initializer=tf.keras.initializers.glorot_uniform,
         )
         self.k_dense_layer = tf.keras.layers.Dense(
-            self.num_units, name="k", use_bias=False, kernel_initializer=tf.keras.initializers.glorot_uniform
+            self.num_units,
+            name="k",
+            use_bias=False,
+            kernel_initializer=tf.keras.initializers.glorot_uniform,
         )
         self.v_dense_layer = tf.keras.layers.Dense(
-            self.num_units, name="v", use_bias=False, kernel_initializer=tf.keras.initializers.glorot_uniform
+            self.num_units,
+            name="v",
+            use_bias=False,
+            kernel_initializer=tf.keras.initializers.glorot_uniform,
         )
         self.output_dense_layer = tf.keras.layers.Dense(
             self.num_units,
@@ -217,7 +232,9 @@ class Attention(tf.keras.layers.Layer):
         q = self.q_dense_layer(x)
         k = self.k_dense_layer(y)
         v = self.v_dense_layer(y)
-
+        if 'confidence' in kwargs:
+            if kwargs["confidence"]:
+                return self.output_dense_layer(v)
         q = split_heads(q, self.num_heads)
         k = split_heads(k, self.num_heads)
         v = split_heads(v, self.num_heads)
@@ -230,10 +247,17 @@ class Attention(tf.keras.layers.Layer):
             cache["k"] = k
             cache["v"] = v
         if training:
-            attention_output, self.attention_weights = scaled_dot_product_attention(q, k, v, bias, self.dropout, scale)
+            attention_output, self.attention_weights = scaled_dot_product_attention(
+                q, k, v, bias, self.dropout, scale
+            )
         else:
-            attention_output, self.attention_weights = scaled_dot_product_attention(q, k, v, bias, scale=scale)
+            attention_output, self.attention_weights = scaled_dot_product_attention(
+                q, k, v, bias, scale=scale
+            )
         attention_output = combine_heads(attention_output, self.num_units)
+        # if "add_one" in kwargs:
+        #     add_one = kwargs["add_one"]
+        #     attention_output += add_one
         attention_output = self.output_dense_layer(attention_output)
         return attention_output
 

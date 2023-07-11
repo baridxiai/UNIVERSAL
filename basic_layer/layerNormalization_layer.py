@@ -2,7 +2,20 @@
 # code warrior: Barid
 import tensorflow as tf
 
+class NaiveNorm(tf.keras.layers.Layer):
+    """A naive norm layer without scalling and shiffting.
 
+        ln(x) = (x - μ) / (σ**2 + ϵ)**0.5
+    """
+    def __init__(
+        self, epsilon=1e-9, name="NavieNorm",
+    ):
+        super(NaiveNorm, self).__init__(name=name)
+        self.epsilon = epsilon
+    def call(self, inputs):
+        o_mean, o_var = tf.nn.moments(inputs, [-1], keepdims=True)
+        o = (inputs - o_mean) * tf.math.rsqrt(o_var + self.epsilon)
+        return o
 class LayerNorm(tf.keras.layers.Layer):
     """
         Layer normalization for transformer, we do that:
