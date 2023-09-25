@@ -17,9 +17,9 @@ bpe_tok = WordLevel(vocab, unk_token="[UNK]")
 bpe_tok = Tokenizer(bpe_tok)
 # bpe_tok = Tokenizer.from_file("/home/vivalavida/workspace/alpha/UNIVERSAL/vocabulary/DeEn_6k_wiki_fastBPE/tokenizer.json")
 data = [
-    ("/Users/barid/Documents/workspace/alpha/UNIVERSAL/vocabulary/EnDeHi_6k_wiki/EnDeHi_codes_6K.en.vocab",736010),
-    ("/Users/barid/Documents/workspace/alpha/UNIVERSAL/vocabulary/EnDeHi_6k_wiki/EnDeHi_codes_6K.de.vocab",695132),
-    ("/Users/barid/Documents/workspace/alpha/UNIVERSAL/vocabulary/EnDeHi_6k_wiki/EnDeHi_codes_6K.hi.vocab",194360),
+    ("/Users/barid/Documents/workspace/alpha/UNIVERSAL/vocabulary/EnDeHi_6k_wiki/EnDeHi_codes_6K.en.vocab",201385103),
+    ("/Users/barid/Documents/workspace/alpha/UNIVERSAL/vocabulary/EnDeHi_6k_wiki/EnDeHi_codes_6K.de.vocab",216757090),
+    ("/Users/barid/Documents/workspace/alpha/UNIVERSAL/vocabulary/EnDeHi_6k_wiki/EnDeHi_codes_6K.hi.vocab",66931677),
 ]
 for k, v in enumerate(data):
     total = 0

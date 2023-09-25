@@ -3,7 +3,6 @@
 import tensorflow as tf
 from UNIVERSAL.MLM import BERT
 from UNIVERSAL.model import MLM_base
-from UNIVERSAL.basic_metric import mean_metric
 
 
 def XLM_masking(

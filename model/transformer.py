@@ -20,6 +20,8 @@ def input_preprocess(inputs, position_index=None, pre_fn=None, **kwargs):
         length = max_seq
     else:
         length = None
+    if position_index == -1:
+        return inputs
     if pre_fn is None:
         inputs = staticEmbedding_util.add_position_timing_signal(
             inputs, 0, position=position_index, length=length

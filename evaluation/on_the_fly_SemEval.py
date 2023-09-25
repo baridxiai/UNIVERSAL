@@ -43,7 +43,7 @@ def report_cos(model, src, tgt, lang1=0, lang2=0, tsne=True):
     vec_src_list = tf.reduce_mean(tf.gather(model, tf.ragged.constant(src)), -2) +  lang1
     vec_tgt_list = tf.reduce_mean(tf.gather(model, tf.ragged.constant(tgt)), -2) +  lang2
     if tsne:
-        tsne = TSNE(2,learning_rate='auto',n_iter=10000,verbose=2,random_state=123,method="exact",init='pca',angle=0.5)
+        tsne = TSNE(2,learning_rate='auto',n_iter=10000,verbose=2,random_state=123,init='pca')
         # method="exact")
         pca = TruncatedSVD(3,random_state=123)
         # n_samples, n_features = tf.shape_n(vec_src_list)

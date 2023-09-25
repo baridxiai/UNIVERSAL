@@ -23,6 +23,7 @@ def kingManWomanQueen(model, encode, lang1, lang2):
     Man = [man, mann]
     Woman = [woman, frau]
     Queen = [queen, Konigin]
+    sum = 0
     print("| Item| Queen| Königin|")
     for _, k in enumerate(King):
         for _, m in enumerate(Man):
@@ -43,6 +44,9 @@ def kingManWomanQueen(model, encode, lang1, lang2):
                     + str(round(konigin_cos.numpy()[0], 2))
                     + "|"
                 )
+                sum += round(queen_cos.numpy()[0], 2)
+                sum += round(konigin_cos.numpy()[0], 2)
+    print(sum)
 
 
 # kingManWomanQueen(model.embedding_softmax_layer,data_manager.encode)

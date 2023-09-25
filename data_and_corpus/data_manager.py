@@ -126,6 +126,7 @@ class DatasetManager_multi(DatasetManager):
         inputs = tf.cast(tf.strings.to_number(tf.strings.split(inputs)), tf.int32)
         return inputs
     def get_raw_train_dataset(self, shuffle=40):
+
         self.train_examples = self.train_examples.shuffle(shuffle)
         if self.mono:
         #     return self.train_examples.map(
@@ -147,5 +148,14 @@ class DatasetManager_multi(DatasetManager):
           , num_parallel_calls=tf.data.experimental.AUTOTUNE
             )
         return self.dev_examples.map(
+            self.tf_tokenize, num_parallel_calls=tf.data.experimental.AUTOTUNE
+        )
+    def on_the_fly_dev_dataset(self, dev_examples):
+        if self.mono:
+            return dev_examples.map(
+                self.tf_mono_preprocess
+          , num_parallel_calls=tf.data.experimental.AUTOTUNE
+            )
+        return dev_examples.map(
             self.tf_tokenize, num_parallel_calls=tf.data.experimental.AUTOTUNE
         )
