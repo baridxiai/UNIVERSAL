@@ -108,7 +108,7 @@ def onehot_loss_function(true, pred, mask_id=0, smoothing=0.1, vocab_size=25000,
     else:
         loss = tf.reduce_sum(input_tensor=xentropy, axis=-1) / tf.reduce_sum(input_tensor=weights, axis=-1)
     if detail_x:
-        return loss,tf.reduce_sum(input_tensor=xentropy, axis=-1) / tf.reduce_sum(input_tensor=weights, axis=-1)
+        return loss,xentropy
     else:
         return loss
 

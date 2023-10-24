@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # code warrior: Barid
 import tensorflow as tf
-from UNIVERSAL.MLM import BERT
-from UNIVERSAL.model import MLM_base
+from UNIVERSAL.MLM import BERT,MLM_base
 
 
 def XLM_masking(

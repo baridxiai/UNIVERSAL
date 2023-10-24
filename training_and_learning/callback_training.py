@@ -23,7 +23,7 @@ class iTensorBoard(tf.keras.callbacks.TensorBoard):
             tf.summary.scalar("lr", lr,step=step)
         return super(iTensorBoard, self).on_train_batch_end(batch, logs=logs)
 
-def get_callbacks(model_path, LRschedule=None, save_freq=5000, save_best=0,):
+def get_callbacks(parameters,model_path):
     TFboard = iTensorBoard(
         log_dir=cwd + "/model_summary/",  update_freq=200
     )
@@ -31,13 +31,12 @@ def get_callbacks(model_path, LRschedule=None, save_freq=5000, save_best=0,):
         model_path + "/model_checkpoint" + "/model.{epoch:02d}-{loss:.2f}.ckpt",
         monitor="loss" ,
         save_weights_only=True,
-        save_freq=save_freq,
+        save_freq=parameters["callback_save_freq"],
         verbose=1,
-        save_best_only=save_best,
+        save_best_only=parameters["callback_save_best"],
     )
     NaNchecker = tf.keras.callbacks.TerminateOnNaN()
     backup = tf.keras.callbacks.BackupAndRestore(backup_dir=model_path + "/model_backup")
-    LRTensorBoard = learning_rate_op.LRTensorBoard()
     call_backs = [
         backup,
         TFboard,
@@ -45,6 +44,4 @@ def get_callbacks(model_path, LRschedule=None, save_freq=5000, save_best=0,):
         NaNchecker,
         # LRTensorBoard
     ]
-    if LRschedule is not None:
-        call_backs.append(LRschedule)
     return call_backs

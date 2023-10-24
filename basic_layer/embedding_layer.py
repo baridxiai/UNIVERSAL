@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # code warrior: Barid
 import tensorflow as tf
-from UNIVERSAL.utils import filter_util as fn_filter
 
 
 class EmbeddingSharedWeights(tf.keras.layers.Layer):
@@ -151,5 +150,5 @@ class PositionEmbedding(EmbeddingSharedWeights):
     def call(self, inputs, linear=False, domain_id=None, keep_dim=True):
         inputs = tf.reshape(tf.range(tf.shape(inputs)[1]), shape=[1, -1])
         if linear:
-            return self._linear(inputs, domain_id=domain_id, keep_dim=keep_dim)
+            return self._linear(inputs)
         return self._embedding(inputs)

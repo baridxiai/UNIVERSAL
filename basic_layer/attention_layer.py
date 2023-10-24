@@ -123,9 +123,9 @@ def scaled_dot_product_attention(q, k, v, mask, dropout=0, scale=None):
         scale = tf.cast(tf.shape(k)[-1], q.dtype) ** -0.5
     else:
         scale = tf.cast(scale, q.dtype)
-    mask = tf.cast(mask, q.dtype)
     logits = tf.matmul(q, k, transpose_b=True) * scale
     if mask is not None:
+        mask = tf.cast(mask, q.dtype)
         neg_inf = _NEG_INF_FP16 if logits.dtype == tf.float16 else _NEG_INF_FP32
         logits += mask * neg_inf
     # Note that softmax internally performs math operations using float32

@@ -2,7 +2,7 @@
 # code warrior: Barid
 import tensorflow as tf
 import functools
-from UNIVERSAL.model import MLM_base
+from UNIVERSAL.MLM import MLM_base
 
 
 

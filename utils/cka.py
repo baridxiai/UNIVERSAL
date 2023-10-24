@@ -2,7 +2,7 @@
 # code warrior: Barid
 import numpy as np
 import tensorflow as tf
-from UNIVERSAL.utils import maskAndBias_util
+from UNIVERSAL.utils import padding_util
 
 
 def gram_linear(x):
@@ -195,7 +195,7 @@ def feature_space_linear_cka_3d_self(x):
     re = tf.math.divide_no_nan(dot_product_similarity, normalization_x * normalization_y)
     mask = tf.shape(re)[-1]
     # mask = tf.reshape(tf.eye(mask,mask),[1,1,mask,mask])
-    mask = maskAndBias_util.get_decoder_self_attention_bias(mask)
+    mask = padding_util.get_decoder_self_attention_bias(mask)
 
     # * 512**-0.5
 

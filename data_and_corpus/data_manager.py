@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
 # code warrior: Barid
 
-# import sentencepiece as sp
-from tokenizers import Tokenizer
-from tokenizers.models import BPE, WordLevel
-from tokenizers.pre_tokenizers import Whitespace
-from tokenizers import pre_tokenizers, decoders, trainers, processors
+from UNIVERSAL.data_and_corpus import dataset_preprocessing
 import tensorflow as tf
-import fastBPE
 
 # import fasttext
 # lang_checker = fasttext.load_model('../lid.176.ftz')
@@ -16,78 +11,82 @@ import fastBPE
 class DatasetManager(object):
     def __init__(
         self,
-        tokenizer_path,
+        vocab,
+        bpe,
         training_set,
-        cut_length=None,
-        tokenization=False,
+        parameters,
+        preprocess_fn=None,
+        postprocess_fn=None,
         dev_set=None,
-        test_set=None,
-        domain_index=[],
-        mono=False,
-        lang_dict = {
-    "en":1,
-}
     ):
-        # self.tokenizer = Tokenizer(BPE(continuing_subword_prefix="@@"))
-        # self.tokenizer.decoder = decoders.ByteLevel()
-        # self.tokenizer.post_processor = processors.ByteLevel(trim_offsets=True)
-        # self.tokenizer.pre_tokenizer = Whitespace()
-        # self.tokenizer.model = BPE.from_file(
-        #     tokenizer_path + 'vocab.json', tokenizer_path + 'merges.txt', unk_token="[UNK]")
-        vocab = WordLevel.read_file(tokenizer_path[0])
-        bpe_tok = WordLevel(vocab, unk_token="[UNK]")
-        self.tokenizer = Tokenizer(bpe_tok)
-        self.bpe_tok = fastBPE.fastBPE(tokenizer_path[1])
-        self.domain_index = domain_index
+        self.tokenizer = vocab
+        self.bpe_tok = bpe
         self.train_examples = training_set
-        self.test_examples = test_set
         self.dev_examples = dev_set
-        self.cut_length = cut_length
-        self.tokenization = tokenization
-        self.mono = mono
-        self.lang_dict =  lang_dict
-        self.tokenizer.add_special_tokens(["[EOS]", "[SOS]", "[PAD]", "[MAK]", "[UNK]"])
+        self.cut_length = parameters["max_sequence_length"]
+        self.preprocess_fn = preprocess_fn
+        self.postprocess_fn = postprocess_fn
+        self.parameters = parameters
+        self.data_opt = tf.data.Options()
+        self.data_opt.experimental_distribute.auto_shard_policy = (
+            tf.data.experimental.AutoShardPolicy.OFF
+        )
+    # def tokenize_encoding(self, lang1, lang2):
+    #     if self.tokenization:
+    #         lang1 = self.encode(lang1.numpy().decode())
+    #         lang2 = self.encode(lang2.numpy().decode())
+    #     else:
+    #         lang1 = list(map(int, lang1.numpy().decode().split()))
+    #         lang2 = list(map(int, lang2.numpy().decode().split()))
+    #     if self.cut_length is not None:
+    #         lang1 = lang1[: self.cut_length]
+    #         lang2 = lang2[: self.cut_length]
+    #     return lang1, lang2
 
-    def get_domain_index(self):
-        return self.domain_index
+    # def tf_tokenize(self, lang1, lang2):
+    #     if self.tokenization:
+    #         lang1, lang2 = tf.py_function(
+    #             self.tokenize_encoding, [lang1, lang2], [tf.int32, tf.int32]
+    #         )
+    #     else:
+    #         lang1 = tf.cast(tf.strings.to_number(tf.strings.split(lang1)), tf.int32)
+    #         lang2 = tf.cast(tf.strings.to_number(tf.strings.split(lang2)), tf.int32)
+    #     lang1.set_shape([None])
+    #     lang2.set_shape([None])
+    #     return lang1, lang2
 
-    def set_domain_index(self, domain_index):
-        self.domain_index = domain_index
+    # def tf_tokenize_mono(self, *args):
+    #     langs_mono = []
+    #     for lang in args:
+    #         lang_re = tf.cast(tf.strings.to_number(tf.strings.split(lang)), tf.int32)
+    #         lang_re.set_shape([None])
+    #         langs_mono.append(lang_re)
+    #     return langs_mono
+    # def get_raw_train_dataset(self, shuffle=40):
+    #     self.train_examples = self.train_examples.shuffle(shuffle)
+    #     if self.mono:
+    #         return self.train_examples.map(
+    #             self.tf_tokenize_mono, num_parallel_calls=tf.data.experimental.AUTOTUNE
+    #         )
+    #     return self.train_examples.map(
+    #         self.tf_tokenize, num_parallel_calls=tf.data.experimental.AUTOTUNE
+    #     )
 
-    def tokenize_encoding(self, lang1, lang2):
-        if self.tokenization:
-            lang1 = self.encode(lang1.numpy().decode())
-            lang2 = self.encode(lang2.numpy().decode())
-        else:
-            lang1 = list(map(int, lang1.numpy().decode().split()))
-            lang2 = list(map(int, lang2.numpy().decode().split()))
-        if self.cut_length is not None:
-            lang1 = lang1[: self.cut_length]
-            lang2 = lang2[: self.cut_length]
-        return lang1, lang2
+    # def get_raw_dev_dataset(self):
+    #     if self.mono:
+    #         return self.dev_examples.map(
+    #             self.tf_tokenize_mono, num_parallel_calls=tf.data.experimental.AUTOTUNE
+    #         )
+    #     return self.dev_examples.map(
+    #         self.tf_tokenize, num_parallel_calls=tf.data.experimental.AUTOTUNE
+    #     )
 
-    def tf_tokenize(self, lang1, lang2):
-        if self.tokenization:
-            lang1, lang2 = tf.py_function(
-                self.tokenize_encoding, [lang1, lang2], [tf.int32, tf.int32]
-            )
-        else:
-            lang1 = tf.cast(tf.strings.to_number(tf.strings.split(lang1)), tf.int32)
-            lang2 = tf.cast(tf.strings.to_number(tf.strings.split(lang2)), tf.int32)
-        lang1.set_shape([None])
-        lang2.set_shape([None])
-        return lang1, lang2
-
-    def tf_tokenize_mono(self, *args):
-        langs_mono = []
-        for lang in args:
-            lang_re = tf.cast(tf.strings.to_number(tf.strings.split(lang)), tf.int32)
-            lang_re.set_shape([None])
-            langs_mono.append(lang_re)
-        return langs_mono
-
-    def encode(self, string):
+    # def get_raw_test_dataset(self):
+    #     return self.test_examples.map(self.tf_tokenise)
+    def encode(self, string, bpe_only=False):
         string = self.bpe_tok.apply([string])[0]
+        if bpe_only:
+            return string
         return self.tokenizer.encode(string.strip().split(" "), is_pretokenized=True).ids
 
     def decode(self, string):
@@ -96,66 +95,62 @@ class DatasetManager(object):
     def get_vocabulary_size(self):
         # return self.tokenizer.vocab_size
         return len(self.tokenizer.get_vocab())
-
-    def get_raw_train_dataset(self, shuffle=40):
-        self.train_examples = self.train_examples.shuffle(shuffle)
-        if self.mono:
-            return self.train_examples.map(
-                self.tf_tokenize_mono, num_parallel_calls=tf.data.experimental.AUTOTUNE
-            )
-        return self.train_examples.map(
-            self.tf_tokenize, num_parallel_calls=tf.data.experimental.AUTOTUNE
-        )
-
-    def get_raw_dev_dataset(self):
-        if self.mono:
-            return self.dev_examples.map(
-                self.tf_tokenize_mono, num_parallel_calls=tf.data.experimental.AUTOTUNE
-            )
-        return self.dev_examples.map(
-            self.tf_tokenize, num_parallel_calls=tf.data.experimental.AUTOTUNE
-        )
-
-    def get_raw_test_dataset(self):
-        return self.test_examples.map(self.tf_tokenise)
-
-class DatasetManager_multi(DatasetManager):
-
-    def tf_mono_preprocess(self, inputs):
-        inputs = tf.strings.split(inputs,"@@")
-        inputs = tf.cast(tf.strings.to_number(tf.strings.split(inputs)), tf.int32)
+    def template(self, inputs):
         return inputs
-    def get_raw_train_dataset(self, shuffle=40):
-
-        self.train_examples = self.train_examples.shuffle(shuffle)
-        if self.mono:
-        #     return self.train_examples.map(
-        #         lambda x: tf.numpy_function(func=self.tf_mono_preprocess,
-        #   inp=[x], Tout=[tf.int32,tf.int32]), num_parallel_calls=tf.data.experimental.AUTOTUNE
-        #     )
-            return self.train_examples.map(
-                self.tf_mono_preprocess
-          , num_parallel_calls=tf.data.experimental.AUTOTUNE
-            )
+    def get_raw_train_dataset(self):
+        self.train_examples = self.train_examples.shuffle(self.parameters["shuffle_dataset"])
         return self.train_examples.map(
-            self.tf_tokenize, num_parallel_calls=tf.data.experimental.AUTOTUNE
-        ).prefetch(tf.data.AUTOTUNE)
-
+            self.template, num_parallel_calls=tf.data.experimental.AUTOTUNE
+        )
     def get_raw_dev_dataset(self):
-        if self.mono:
-            return self.dev_examples.map(
-                self.tf_mono_preprocess
-          , num_parallel_calls=tf.data.experimental.AUTOTUNE
-            )
         return self.dev_examples.map(
-            self.tf_tokenize, num_parallel_calls=tf.data.experimental.AUTOTUNE
+            self.template, num_parallel_calls=tf.data.experimental.AUTOTUNE
         )
     def on_the_fly_dev_dataset(self, dev_examples):
-        if self.mono:
-            return dev_examples.map(
-                self.tf_mono_preprocess
-          , num_parallel_calls=tf.data.experimental.AUTOTUNE
-            )
-        return dev_examples.map(
-            self.tf_tokenize, num_parallel_calls=tf.data.experimental.AUTOTUNE
+        dev_examples =  dev_examples.map(
+            self.template, num_parallel_calls=tf.data.experimental.AUTOTUNE
         )
+        dev_examples = dev_examples.map(
+                    self.preprocess_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE
+    )
+        return dev_examples.padded_batch(self.parameters["batch_size"], padding_values=0)
+
+    def preprocess_dataset(self,dataset):
+        if self.parameters["greedy_padding"]:
+            preprocessed_dataset = dataset_preprocessing.greedyBatch_training_input(
+                dataset,
+                self.parameters,
+                min_boundary=8,
+                filter_min=1,
+                filter_max=self.parameters["max_sequence_length"],
+                preprocess_fn=self.preprocess_fn,
+                postprocess_fn=self.postprocess_fn,
+            )
+        else:
+                training_dataset = dataset.map(
+                    self.preprocess_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE
+    )
+                training_dataset = training_dataset.shuffle(self.parameters["shuffle_dataset"])
+                preprocessed_dataset = training_dataset.padded_batch(self.parameters["batch_size"], padding_values=0)
+        return preprocessed_dataset
+    def preprocessed_training_dataset(self):
+        preprocessed_dataset = self.preprocess_dataset(self.get_raw_train_dataset())
+        return preprocessed_dataset.with_options(self.data_opt)
+    def preprocessed_dev_dataset(self):
+        if self.dev_examples is not None:
+            preprocessed_dataset = self.preprocess_dataset(self.get_raw_dev_dataset())
+            return preprocessed_dataset.with_options(self.data_opt)
+        else:
+            return None
+
+
+class DatasetManager_monolingual_LangIDatatSent(DatasetManager):
+    def template(self, inputs):
+        inputs = tf.strings.split(inputs, "@@")
+        inputs = tf.cast(tf.strings.to_number(tf.strings.split(inputs)), tf.int32)
+        return inputs
+
+
+class DatasetManager_monolingual_LangIDatatSent_Classification(DatasetManager):
+    def template(self, x,y):
+        return (x,y)

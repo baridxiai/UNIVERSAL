@@ -3,7 +3,7 @@
 import tensorflow as tf
 from UNIVERSAL.basic_layer import embedding_layer, layerNormalization_layer
 from UNIVERSAL.block import TransformerBlock
-from UNIVERSAL.utils import padding_util, maskAndBias_util, staticEmbedding_util, cka
+from UNIVERSAL.utils import padding_util, staticEmbedding_util, cka
 from UNIVERSAL.training_and_learning.NaiveSeq2Seq_learning import NaiveSeq2Seq
 import json
 import sys
@@ -313,7 +313,7 @@ class Transformer(NaiveSeq2Seq):
         attention_bias = padding_util.get_padding_bias(src)
         encoder_padding = padding_util.get_padding(src)
         decoder_padding = padding_util.get_padding(tgt)
-        decoder_self_attention_bias = maskAndBias_util.get_decoder_self_attention_bias(
+        decoder_self_attention_bias = padding_util.get_decoder_self_attention_bias(
             tf.shape(tgt)[1]
         )
         return attention_bias, decoder_self_attention_bias, encoder_padding, decoder_padding
@@ -359,7 +359,7 @@ class Transformer(NaiveSeq2Seq):
         self, max_decode_length, lang_embedding=None, tgt_domain_id=0, beam_size=4
     ):
         """Returns a decoding function that calculates logits of the next tokens."""
-        decoder_self_attention_bias = maskAndBias_util.get_decoder_self_attention_bias(
+        decoder_self_attention_bias =  padding_util.get_decoder_self_attention_bias(
             max_decode_length
         )
 

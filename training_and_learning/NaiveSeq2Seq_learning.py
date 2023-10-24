@@ -109,7 +109,7 @@ class NaiveSeq2Seq(tf.keras.Model):
         return
 
     def predict(
-        self, autoregressive_fn, sos_id=1, eos_id=2, cache=None, beam_size=0, max_decode_length=99
+        self, autoregressive_fn,cache=None, beam_size=0, max_decode_length=99
     ):
         """Return predicted sequence."""
         decoded_ids, scores = self.beam_search.predict(
