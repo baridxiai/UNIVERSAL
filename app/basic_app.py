@@ -5,8 +5,8 @@ import tensorflow as tf
 import sys
 import os
 
-from UNIVERSAL.training_and_learning import callback_training
-from UNIVERSAL.data_and_corpus import data_manager
+# from UNIVERSAL.training_and_learning import callback_training
+# from UNIVERSAL.data_and_corpus import data_manager
 cwd = os.getcwd()
 sys.path.append(os.path.abspath(os.path.join(cwd, os.pardir)))
 os.environ["TF_ENABLE_AUTO_MIXED_PRECISION"] = "1"  # fp16 training
@@ -29,7 +29,7 @@ class APP(object):
             vocab=config_builder["vocab_model"],
             bpe=config_builder["bpe_model"],
             parameters=parameters,
-            training_set=config_builder["training_set_generator"],
+            training_set= config_builder["training_set_generator"],
             preprocess_fn=config_builder["preprocess_fn"],
             postprocess_fn=config_builder["postprocess_fn"],
             dev_set=config_builder["dev_set_generator"]
@@ -42,6 +42,7 @@ class APP(object):
         self.model = self.config["model_class"](self.parameters)
         self.callback = self.config["callbacks"]
         self.dataManager = self.config["dataManager"]
+        # call TF naive compile
         self.model.compile(optimizer=self.optimizer)
         try:
             self.model.load_weights(self.parameters["checkpoint_path"])
@@ -75,19 +76,18 @@ class APP(object):
                 epochs=self.parameters["epoch"],
                 # verbose=1,
                 callbacks=self.callback,
-                validation_freq=1,
+                validation_freq=1
             )
         else:
             self.model.fit(
                 self.dataManager.preprocessed_training_dataset(),
                 epochs=self.parameters["epoch"],
                 # verbose=1,
-                callbacks=self.callback,
+                callbacks=self.callback
             )
     def evaluate(self,data):
         data = self.dataManager.on_the_fly_dev_dataset(data)
         return self.model.evaluate(data)
-
 
 # if __name__ == "__main__":
 #     main()

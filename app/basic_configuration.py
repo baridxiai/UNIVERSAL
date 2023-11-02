@@ -26,7 +26,82 @@ import os
 
 """
 
+def get_128_config():
+    parameters = {
 
+
+        # -----------model: Transformer-------------
+        "num_units": 128,
+        "num_heads": 4,
+        "embedding_size": 128,
+        "num_encoder_layers": 12,
+        "num_decoder_layers": 0,
+        "dropout": 0.1,
+        "epsilon": 1e-9,
+        "preNorm": True,
+        "step_encoding": False,
+        "position_encoding": True,
+        "scale_we": False,
+        "affine_we": False,
+        "ffn_activation": "gelu",
+        "inputNorm": False,  # Normlize embedding+languageEmbedding+positionEmbedding
+        "norm_dropout": 0.1,
+        "learnable_pe": True,
+        # ~~~~~~~~~end~~~~~~~~~~~~~~~
+
+    }
+    return parameters
+
+def get_256_config():
+    parameters = {
+
+
+        # -----------model: Transformer-------------
+        "num_units": 256,
+        "num_heads": 4,
+        "embedding_size": 256,
+        "num_encoder_layers": 12,
+        "num_decoder_layers": 0,
+        "dropout": 0.1,
+        "epsilon": 1e-9,
+        "preNorm": True,
+        "step_encoding": False,
+        "position_encoding": True,
+        "scale_we": False,
+        "affine_we": False,
+        "ffn_activation": "gelu",
+        "inputNorm": False,  # Normlize embedding+languageEmbedding+positionEmbedding
+        "norm_dropout": 0.1,
+        "learnable_pe": True,
+        # ~~~~~~~~~end~~~~~~~~~~~~~~~
+
+    }
+    return parameters
+def get_512_config():
+    parameters = {
+
+
+        # -----------model: Transformer-------------
+        "num_units": 512,
+        "num_heads": 8,
+        "embedding_size": 512,
+        "num_encoder_layers": 12,
+        "num_decoder_layers": 0,
+        "dropout": 0.1,
+        "epsilon": 1e-9,
+        "preNorm": True,
+        "step_encoding": False,
+        "position_encoding": True,
+        "scale_we": False,
+        "affine_we": False,
+        "ffn_activation": "gelu",
+        "inputNorm": False,  # Normlize embedding+languageEmbedding+positionEmbedding
+        "norm_dropout": 0.1,
+        "learnable_pe": True,
+        # ~~~~~~~~~end~~~~~~~~~~~~~~~
+
+    }
+    return parameters
 
 def get_parameters(profile):
     parameters = {
@@ -126,15 +201,17 @@ def get_parameters(profile):
     return parameters
 
 def get_config_builder(parameters):
-
     config_builder = {
         "optimizer": tf.keras.optimizers.Adam(
             parameters["lr"],
             parameters["adam_beta1"],
             parameters["adam_beta2"],
             parameters["adam_epsilon"],
+            jit_compile=False,
         ),
-        "distribution_strategy": tf.distribute.MirroredStrategy(),  # set to None for 0 or 1 GPU
+        "distribution_strategy": tf.distribute.experimental.MultiWorkerMirroredStrategy(
+   communication= tf.distribute.experimental.CollectiveCommunication.RING
+),  # set to None for 0 or 1 GPU
         "bpe_model": fastBPE.fastBPE(parameters["bpe_path"]),
         "vocab_model": Tokenizer(
             WordLevel(WordLevel.read_file(parameters["vocab_path"]), unk_token="[UNK]")

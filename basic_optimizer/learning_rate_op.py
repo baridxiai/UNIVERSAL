@@ -3,18 +3,18 @@
 import tensorflow as tf
 
 
-class LRTensorBoard(tf.keras.callbacks.Callback):
-    # add other arguments to __init__ if you need
-    def on_train_batch_end(self, batch, logs=None):
-        step =self.model.optimizer.iterations.read_value()
-        logs = logs or {}
-        lr_schedule = getattr(self.model.optimizer, "lr", None)
-        if isinstance(lr_schedule, tf.keras.optimizers.schedules.LearningRateSchedule):
-            logs["lr"] = lr_schedule(self.model.optimizer.step)
-        elif lr_schedule is not None:
-            logs["lr"] = lr_schedule
-        self.model.add_metric()
-        super(LRTensorBoard,self).on_train_batch_end(batch, logs)
+# class LRTensorBoard(tf.keras.callbac ):
+#     # add other arguments to __init__ if you need
+#     def on_train_batch_end(self, batch, logs=None):
+#         step =self.model.optimizer.iterations.read_value()
+#         logs = logs or {}
+#         lr_schedule = getattr(self.model.optimizer, "lr", None)
+#         if isinstance(lr_schedule, tf.keras.optimizers.schedules.LearningRateSchedule):
+#             logs["lr"] = lr_schedule(self.model.optimizer.step)
+#         elif lr_schedule is not None:
+#             logs["lr"] = lr_schedule
+#         self.model.add_metric()
+#         super(LRTensorBoard,self).on_train_batch_end(batch, logs)
 
 class LearningRate_Warmup(tf.keras.optimizers.schedules.LearningRateSchedule):
     """Learning rate schedule.

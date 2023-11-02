@@ -115,8 +115,12 @@ def get_config_builder(parameters):
             parameters["adam_beta1"],
             parameters["adam_beta2"],
             parameters["adam_epsilon"],
+            jit_compile=False,
         ),
-        "distribution_strategy": tf.distribute.MirroredStrategy(),  # set to None for 0 or 1 GPU
+        "distribution_strategy": tf.distribute.experimental.MultiWorkerMirroredStrategy(
+   communication= tf.distribute.experimental.CollectiveCommunication.RING
+),  # set to None for 0 or 1 GPU
+        # "distribution_strategy": tf.distribute.MirroredStrategy(),  # set to None for 0 or 1 GPU
         "bpe_model": fastBPE.fastBPE(parameters["bpe_path"]),
         "vocab_model": Tokenizer(
             WordLevel(WordLevel.read_file(parameters["vocab_path"]), unk_token="[UNK]")

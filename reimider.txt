@@ -1,0 +1,7 @@
+#tesorflow 2.14.0
+
+!!!config_builder!!!
+
+1. "distribution_strategy": tf.distribute.experimental.MultiWorkerMirroredStrategy(
+   communication= tf.distribute.experimental.CollectiveCommunication.RING
+2. "optimizer": tf.keras.optimizers.Adam(jit_compile=False) / tf.keras.optimizers.legacy.Adam()

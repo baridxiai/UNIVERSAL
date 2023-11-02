@@ -32,7 +32,7 @@ class Classification_app(basic_app.APP):
         self.callback = self.config["callbacks"]
         self.dataManager = self.config["dataManager"]
         model = self.config["model_class"](self.parameters)
-        model.compile(optimizer=self.config["optimizer_temp"])
+        model.compile(optimizer=self.optimizer)
         try:
             model.load_weights(self.parameters["checkpoint_path"])
             print("pre-trained weights loaded")

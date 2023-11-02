@@ -10,13 +10,6 @@ from UNIVERSAL.MLM import preprocess_MLM
 
 
 def MLM_data_model(parameters):
-    # x_input_span, x_output_span, x_span, x_label, lang_ids = preprocess_MLM(inputs, parameters)
-    # x_input_span.set_shape([None])
-    # x_output_span.set_shape([None])
-    # x_span.set_shape([None])
-    # x_label.set_shape([None])
-    # lang_ids.set_shape([None])
-
     return (lambda inputs: preprocess_MLM.preprocess_MLM(inputs, parameters))
 
 def Classification_data_model_idLang_label(x,y):

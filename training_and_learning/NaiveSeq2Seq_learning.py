@@ -42,7 +42,7 @@ class NaiveSeq2Seq(tf.keras.Model):
         ###########gradient tower
 
     def compile(self, optimizer):
-        super(NaiveSeq2Seq, self).compile(optimizer=optimizer)
+        super(NaiveSeq2Seq, self).compile(optimizer=optimizer,jit_compile=False, steps_per_execution='auto')
         self.test_on_batch(np.array([[self.param["EOS_ID"]]]))
         self.summary(print_fn=tf.print)
         self._jit_compile = False
